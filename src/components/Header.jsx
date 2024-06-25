@@ -3,9 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
+import Modal from "react-modal";
+import { useState } from "react";
+import { FiPlusCircle } from "react-icons/fi";
+import { HiCamera } from "react-icons/hi2";
+import { IoClose } from "react-icons/io5";
 
 export default function Header() {
   const { data: session } = useSession();
+  const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="shadow-sm border-b sticky top-0 bg-white z-30 p-3">
       <div className="flex justify-between max-w-6xl mx-auto">
@@ -42,12 +48,19 @@ export default function Header() {
 
         {/* Profile */}
         {session ? (
-          <img
-            src={session.user.image}
-            alt={session.user.name}
-            className="rounded-full w-10 h-10 cursor-pointer"
-            onClick={signOut}
-          />
+          <div className="flex items-center gap-5">
+            <FiPlusCircle
+              size={20}
+              className="cursor-pointer hover:scale-110 transform transition duration-200"
+              onClick={() => setIsOpen(true)}
+            />
+            <img
+              src={session.user.image}
+              alt={session.user.name}
+              className="rounded-full w-10 h-10 cursor-pointer border-2 border-gray-800"
+              onClick={signOut}
+            />
+          </div>
         ) : (
           <button
             onClick={signIn}
@@ -57,6 +70,37 @@ export default function Header() {
           </button>
         )}
       </div>
+      {isOpen && (
+        <>
+          <Modal
+            isOpen={isOpen}
+            onRequestClose={() => setIsOpen(false)}
+            ariaHideApp={false}
+            className="max-w-lg w-[90%] p-6 absolute top-56 left-[50%] translate-x-[-50%] bg-white border-2 rounded-md shadow-md"
+          >
+            <div className="flex flex-col justify-center items-center h-[100%]">
+              <HiCamera
+                size={100}
+                className=" text-gray-400 cursor-pointer mb-4"
+              />
+            </div>
+            <textarea
+              type="text"
+              maxLength={150}
+              placeholder="Please enter your caption..."
+              className="h-20 border-none w-full  outline-none ring-2 rounded-md p-2 ring-gray-100 mb-4"
+            />
+            <button className=" bg-blue-600 p-2 text-white text-sm hover:brightness-125 font-semibold rounded-md disabled:bg-blue-400 cursor-progress disabled:brightness-100">
+              Upload
+            </button>
+            <IoClose
+              size={25}
+              className="absolute right-3 top-3 cursor-pointer text-gray-600"
+              onClick={() => setIsOpen(false)}
+            />
+          </Modal>
+        </>
+      )}
     </div>
   );
 }
