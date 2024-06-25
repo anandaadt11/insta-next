@@ -15,6 +15,12 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  serverTimestamp,
+} from "firebase/firestore";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -22,6 +28,10 @@ export default function Header() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageFileUrl, setImageFileUrl] = useState(null);
   const [imageFIleUploading, setImageFileUploading] = useState(false);
+  const [postUploading, setPostUploading] = useState(false);
+  const [caption, setCaption] = useState("");
+  const db = getFirestore(app);
+
   const filePickerRef = useRef(null);
 
   const closeModal = () => {
@@ -70,6 +80,19 @@ export default function Header() {
       setSelectedFile(file);
       setImageFileUrl(URL.createObjectURL(file));
     }
+  };
+
+  const handleSubmit = async () => {
+    setPostUploading(true);
+    const docRef = await addDoc(collection(db, "posts"), {
+      username: session.user.username,
+      caption,
+      profileImg: session.user.image,
+      image: imageFileUrl,
+      timestamp: serverTimestamp(),
+    });
+    setPostUploading(false);
+    setIsOpen(false);
   };
 
   return (
@@ -136,7 +159,7 @@ export default function Header() {
             isOpen={isOpen}
             onRequestClose={closeModal}
             ariaHideApp={false}
-            className="max-w-lg w-[90%] p-6 absolute top-56 left-[50%] translate-x-[-50%] bg-white border-2 rounded-md shadow-md"
+            className="max-w-lg w-[90%] p-6 absolute top-40 left-[50%] translate-x-[-50%] bg-white border-2 rounded-md shadow-md"
           >
             <div className="flex flex-col justify-center items-center h-[100%]">
               {selectedFile ? (
@@ -168,8 +191,18 @@ export default function Header() {
               maxLength={150}
               placeholder="Please enter your caption..."
               className="h-20 border-none w-full  outline-none ring-2 rounded-md p-2 ring-gray-100 mb-4"
+              onChange={(e) => setCaption(e.target.value)}
             />
-            <button className=" bg-blue-600 p-2 text-white text-sm hover:brightness-125 font-semibold rounded-md disabled:bg-blue-400 cursor-progress disabled:brightness-100">
+            <button
+              onClick={handleSubmit}
+              disabled={
+                !selectedFile ||
+                caption.trim() === "" ||
+                postUploading ||
+                imageFIleUploading
+              }
+              className=" bg-blue-600 p-2 text-white text-sm hover:brightness-125 font-semibold rounded-md disabled:bg-blue-400 disabled:cursor-not-allowed disabled:brightness-100"
+            >
               Upload
             </button>
             <IoClose
